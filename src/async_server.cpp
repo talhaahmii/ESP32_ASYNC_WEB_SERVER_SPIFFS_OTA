@@ -131,8 +131,8 @@ static String server_directory(bool ishtml) {
   while (foundfile) {
     if (ishtml) {
       returnText += "<tr align='left'><td>" + String(foundfile.name()) + "</td><td>" + server_ui_size(foundfile.size()) + "</td>";
-      returnText += "<td><button class='directory_buttons' onclick=\"directory_button_handler(\'" + String(foundfile.name()) + "\', \'download\')\">Download</button>";
-      returnText += "<td><button class='directory_buttons' onclick=\"directory_button_handler(\'" + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
+      returnText += "<td><button class='directory_buttons' onclick=\"directory_button_handler(\'"+ String("/") + String(foundfile.name()) + "\', \'download\')\">Download</button>";
+      returnText += "<td><button class='directory_buttons' onclick=\"directory_button_handler(\'"+ String("/")  + String(foundfile.name()) + "\', \'delete\')\">Delete</button></tr>";
     } else {
       returnText += "File: " + String(foundfile.name()) + " Size: " + server_ui_size(foundfile.size()) + "\n";
     }
@@ -264,8 +264,8 @@ void server_configure() {
       if (request->hasParam("name") && request->hasParam("action")) {
         const char *fileName = request->getParam("name")->value().c_str();
         const char *fileAction = request->getParam("action")->value().c_str();
-
-        logmessage = "Client:" + request->client()->remoteIP().toString() + " " + request->url() + "?name=" + String(fileName) + "&action=" + String(fileAction);
+        Serial.println(fileName);
+        logmessage = "Client:" + request->client()->remoteIP().toString() + " " + request->url() + "? name=" + String(fileName) + " & action=" + String(fileAction);
 
         if (!SPIFFS.exists(fileName)) {
           Serial.println(logmessage + " ERROR: file does not exist");

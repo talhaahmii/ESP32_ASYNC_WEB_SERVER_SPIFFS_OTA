@@ -4,22 +4,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="style.css">
+  <title>ESP32 Server</title>
 </head>
 <body>
-  <h1>ESP32 Server</h1>
-  <p>Build Time Stamp: %BUILD_TIMESTAMP%</p>
-  <p>SPIFFS Storage : <span id="totalspiffs">%TOTALSPIFFS%</span> | Used : <span id="usedspiffs">%USEDSPIFFS%</span></p>
-  <p>
-  <button class='home_buttons' onclick="logout_handler()">Logout</button>
-  <button class='home_buttons' onclick="reboot_handler()">Reboot</button>
-  <button class='home_buttons' onclick="directory_handler()">Directory</button>
-  <button class='home_buttons' onclick="upload_handler()">Upload</button>
-  </p>
-  <p id="status"></p>
-  <p id="directory_header"></p>
-  <p id="directory_details"></p>
-  <p id="upload_header"></p>
-  <p id="upload"></p>
+  <header>
+    <h1>ESP32 Control Panel</h1>
+  </header>
+
+  <main>
+    <section>
+      <p>Build Time Stamp: <strong>%BUILD_TIMESTAMP%</strong></p>
+      <p>SPIFFS Storage: <strong id="totalspiffs">%TOTALSPIFFS%</strong> | Used: <strong id="usedspiffs">%USEDSPIFFS%</strong></p>
+    </section>
+
+    <section class="buttons-section">
+      <button class='home_buttons' onclick="logout_handler()">Logout</button>
+      <button class='home_buttons' onclick="reboot_handler()">Reboot</button>
+      <button class='home_buttons' onclick="directory_handler()">Directory</button>
+      <button class='home_buttons' onclick="upload_handler()">Upload</button>
+    </section>
+
+    <section id="status-section">
+      <p id="status"></p>
+    </section>
+
+    <section id="directory-section">
+      <h2 id="directory_header"></h2>
+      <p id="directory_details"></p>
+    </section>
+
+    <section id="upload-section">
+      <h2 id="upload_header"></h2>
+      <p id="upload"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 ESP32 Server | All rights reserved.</p>
+  </footer>
 <script>
 
 function logout_handler() {
