@@ -37,6 +37,10 @@ const int default_webserverporthttp = 80;
 static WIFI_CONFIG config;    
 static File SpiffsFile;
 
+String Read_rootca;
+String Client_cert;
+String Client_privatekey;
+
 static String server_directory(bool ishtml = false);
 static void server_not_found(AsyncWebServerRequest *request);
 static bool server_authenticate(AsyncWebServerRequest * request);
@@ -50,6 +54,44 @@ static int spiffs_chunked_read(uint8_t* buffer, int maxLen);
 
 
 void server_init() {
+  //=======================================
+  //Root CA File Reading.
+  File file2 = SPIFFS.open("/CACert.crt", "r");
+  if (!file2) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  Serial.println("Root CA File Content:");
+  while (file2.available()) {
+    Read_rootca = file2.readString();
+    Serial.println(Read_rootca);
+  }
+  //=============================================
+  // Cert file reading
+  File file4 = SPIFFS.open("/ClientCert.crt", "r");
+  if (!file4) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  Serial.println("Cert File Content:");
+  while (file4.available()) {
+    Client_cert = file4.readString();
+    Serial.println(Client_cert);
+  }
+  //=================================================
+  //Privatekey file reading
+  File file6 = SPIFFS.open("/ClientPrivate.key", "r");
+  if (!file6) {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  Serial.println("privateKey File Content:");
+  while (file6.available()) {
+    Client_privatekey = file6.readString();
+    Serial.println(Client_privatekey);
+  }
+  //=====================================================
+
   Serial.print("SPIFFS Free: "); Serial.println(server_ui_size((SPIFFS.totalBytes() - SPIFFS.usedBytes())));
   Serial.print("SPIFFS Used: "); Serial.println(server_ui_size(SPIFFS.usedBytes()));
   Serial.print("SPIFFS Total: "); Serial.println(server_ui_size(SPIFFS.totalBytes()));
@@ -174,7 +216,19 @@ static String server_string_processor(const String& var) {
         return server_ui_size(SPIFFS.totalBytes());
         }
     else
-        return "?";
+    if (var == "CLIENTID") {
+    return "TALHA";//readEEPROM(CLIENT_ID_ADDR, 50);  // Replace with the actual stored Client ID
+      } 
+    else 
+    if (var == "TOPIC") {
+    return "AHMED";//readEEPROM(TOPIC_ADDR, 50);      // Replace with the actual stored Topic
+      } 
+    else 
+    if (var == "SIMAPN") {
+    return "HELLO FROM ESP";//readEEPROM(SIM_APN_ADDR, 50);    // Replace with the actual stored SIM APN
+      }
+    // return "?";
+    return String();  // Return an empty string for unknown placeholders
     }
 
 
@@ -201,6 +255,32 @@ void server_configure() {
   // run handleUpload function when any file is uploaded
   server->onFileUpload(server_handle_upload);
 
+   // route to handle the user inputs for MQTT settings
+  server->on("/save-mqtt-settings", HTTP_POST, [](AsyncWebServerRequest *request) {
+    String clientID, topic, simAPN;
+
+    // Check if all the required parameters are present
+    if (request->hasParam("clientID", true) && request->hasParam("topic", true) && request->hasParam("simAPN", true)) {
+      clientID = request->getParam("clientID", true)->value();
+      topic = request->getParam("topic", true)->value();
+      simAPN = request->getParam("simAPN", true)->value();
+
+      // Debug prints to check the received values
+      Serial.println("Received MQTT Client ID: " + clientID);
+      Serial.println("Received MQTT Topic: " + topic);
+      Serial.println("Received SIM APN: " + simAPN);
+
+      // You can now save or process these variables
+      // For example, you can store them in SPIFFS, EEPROM, or use them directly
+
+      // Respond with a success message
+      request->send(200, "text/plain", "MQTT Settings Saved Successfully");
+    } else {
+      // Respond with an error if any parameter is missing
+      request->send(400, "text/plain", "Missing parameters");
+    }
+  });
+
   // visiting this page will cause you to be logged out
   server->on("/logout", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->requestAuthentication();
@@ -225,6 +305,7 @@ void server_configure() {
       Serial.println(logmessage);
       return request->requestAuthentication();
     }
+    
   });
 
 

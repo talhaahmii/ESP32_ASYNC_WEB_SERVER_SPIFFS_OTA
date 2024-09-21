@@ -6,6 +6,10 @@
 extern AsyncWebServer *server;
 extern bool IsRebootRequired;
 
+extern String Read_rootca;
+extern String Client_cert;
+extern String Client_privatekey;
+
 void server_init();
 
 #endif

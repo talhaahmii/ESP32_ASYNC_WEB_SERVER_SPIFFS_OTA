@@ -17,6 +17,39 @@
       <p>SPIFFS Storage: <strong id="totalspiffs">%TOTALSPIFFS%</strong> | Used: <strong id="usedspiffs">%USEDSPIFFS%</strong></p>
     </section>
 
+    <!-- New input fields section -->
+    <section>
+      <h2>MQTT Settings</h2>
+
+      <form action="/save-mqtt-settings" method="POST">
+        <label for="clientID">MQTT Client ID:</label>
+        <input type="text" id="clientID" name="clientID" value="%CLIENTID%" required><br><br>
+        
+        <label for="topic">MQTT Topic:</label>
+        <input type="text" id="topic" name="topic" value="%TOPIC%" required><br><br>
+        
+        <label for="simAPN">SIM APN:</label>
+        <input type="text" id="simAPN" name="simAPN" value="%SIMAPN%" required><br><br>
+        
+        <input type="button" value="Submit" onclick="submitForm()">
+      </form>
+    </body>
+    </html>
+    
+      <!-- <form id="mqtt-form">
+        <label for="mqtt-client-id">MQTT Client ID:</label><br>
+        <input type="text" id="mqtt-client-id" name="mqttClientID" placeholder="Enter MQTT Client ID"><br><br>
+        
+        <label for="mqtt-topic">MQTT Topic:</label><br>
+        <input type="text" id="mqtt-topic" name="mqttTopic" placeholder="Enter MQTT Topic"><br><br>
+        
+        <label for="sim-apn">SIM APN:</label><br>
+        <input type="text" id="sim-apn" name="simAPN" placeholder="Enter SIM APN"><br><br>
+
+        <input type="button" value="Submit" onclick="submitForm()">
+      </form>
+    </section> -->
+
     <section class="buttons-section">
       <button class='home_buttons' onclick="logout_handler()">Logout</button>
       <button class='home_buttons' onclick="reboot_handler()">Reboot</button>
@@ -42,7 +75,21 @@
   <footer>
     <p>&copy; 2024 ESP32 Server | All rights reserved.</p>
   </footer>
+
 <script>
+  function submitForm() {
+    const clientID = document.getElementById("clientID").value;
+    const topic = document.getElementById("topic").value;
+    const simAPN = document.getElementById("simAPN").value;
+
+    // Example of sending data via XMLHttpRequest (AJAX)
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/save-mqtt-settings", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.send(`clientID=${clientID}&topic=${topic}&simAPN=${simAPN}`);
+    
+    document.getElementById("status").innerHTML = "Settings saved successfully!";
+  }
 
 function logout_handler() {
   var xhr = new XMLHttpRequest();

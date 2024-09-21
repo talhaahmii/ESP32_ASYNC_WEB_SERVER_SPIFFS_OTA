@@ -18,9 +18,7 @@
 #define GSM_SLEEP_PIN 32
 #define uS_TO_S_FACTOR 1000000ULL /* Conversion factor for micro seconds to seconds */     
 uint64_t TIME_TO_SLEEP = 14400ULL * uS_TO_S_FACTOR; /* Time ESP32 will go to sleep (in seconds) */
-String Read_rootca;
-String Read_cert;
-String Read_privatekey;
+
 // **************************************************************************************
 //
 //      Local Functions declaration
@@ -106,45 +104,6 @@ void setup() {
 		ESP.restart();
 		}
  
-  //=======================================
-  //Root CA File Reading.
-  File file2 = SPIFFS.open("/AmazonRootCA1.pem", "r");
-  if (!file2) {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-  Serial.println("Root CA File Content:");
-  while (file2.available()) {
-    Read_rootca = file2.readString();
-    Serial.println(Read_rootca);
-  }
-  //=============================================
-  // Cert file reading
-  File file4 = SPIFFS.open("/83e2fa1863-certificate.pem.crt", "r");
-  if (!file4) {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-  Serial.println("Cert File Content:");
-  while (file4.available()) {
-    Read_cert = file4.readString();
-    Serial.println(Read_cert);
-  }
-  //=================================================
-  //Privatekey file reading
-  File file6 = SPIFFS.open("/83e2fa1863-private.pem.key", "r");
-  if (!file6) {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-  Serial.println("privateKey File Content:");
-  while (file6.available()) {
-    Read_privatekey = file6.readString();
-    Serial.println(Read_privatekey);
-  }
-  //=====================================================
-
-
 	server_init();
 	// your application initialization code ...
 	}

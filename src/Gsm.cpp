@@ -11,6 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <esp_task_wdt.h>
+#include "async_server.h"
 
 // Define the broker and port as macros
 #define BROKER "iot.thingsty.com"
@@ -91,89 +92,6 @@ static void enterDeepSleep();
 static void restartGSM();
 
 // **************************************************************************************
-//        **************Certificates***************
-//                  1. CA Certificate
-//                  2. Client certificate
-//                  3. Client private Key
-// **************************************************************************************
-
-// CA Certificate
-const char *CA_certificate =
-    "-----BEGIN CERTIFICATE-----\n"
-    "MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF\n"
-    "ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6\n"
-    "b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL\n"
-    "MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv\n"
-    "b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj\n"
-    "ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM\n"
-    "9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw\n"
-    "IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6\n"
-    "VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L\n"
-    "93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm\n"
-    "jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
-    "AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA\n"
-    "A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI\n"
-    "U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs\n"
-    "N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv\n"
-    "o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU\n"
-    "5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\n"
-    "rqXRfboQnoZsG4q5WTP468SQvvG5\n"
-    "-----END CERTIFICATE-----\n";
-
-// Client Certificate
-const char *Cliet_certificate =
-    "-----BEGIN CERTIFICATE-----\n"
-    "MIIDWjCCAkKgAwIBAgIVAJ4aWhELV2HZRzvq7ZBDWXcY2AvPMA0GCSqGSIb3DQEB\n"
-    "CwUAME0xSzBJBgNVBAsMQkFtYXpvbiBXZWIgU2VydmljZXMgTz1BbWF6b24uY29t\n"
-    "IEluYy4gTD1TZWF0dGxlIFNUPVdhc2hpbmd0b24gQz1VUzAeFw0yNDA4MTAxMzM5\n"
-    "MzBaFw00OTEyMzEyMzU5NTlaMB4xHDAaBgNVBAMME0FXUyBJb1QgQ2VydGlmaWNh\n"
-    "dGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDZ8AQIHBpJaqlp8UNK\n"
-    "725e4e+aRdbgUYBTzorjqIGMcykyCM/9PsK7nWjDAp2EHEsALu4jUEuQUGE0vCEK\n"
-    "HuCVdScXasIeTwUx0pbIVBNL0Ot7YgLlaAT7L9R6GCR1EPl/Jz1Vg9xPFcpH1jyJ\n"
-    "J9mGpLerbhx4n6jkKAjOLRXLuMAZTdnOp+YRoFAUmMWM5fu/v90XbANoa0nBHRO3\n"
-    "tvGev9q/+gehPvw1w8+HLVZBZhPvDI2cuLyksPtSzhaN7CJgqIopBCpY3XGTQ3VN\n"
-    "UCibX0L7mj9MueAOMnGCglMYWEqRQ/1ECcK2nSqM+TQ4WvslDXnldplYFqyeH4UN\n"
-    "hhFNAgMBAAGjYDBeMB8GA1UdIwQYMBaAFH6XX7FECTT3SpERWDreltdMDoL5MB0G\n"
-    "A1UdDgQWBBTzhymxpokvjyXXqVidQhF8ejTF5TAMBgNVHRMBAf8EAjAAMA4GA1Ud\n"
-    "DwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAQEAaGMiU0MB6qPIBTZer2nVHp9J\n"
-    "HeoT8FteJErOrx0uUmm0ZKszVx9nEfhYvqVD9nkobchmU3dF4Ovr2jnuCHAq6ksn\n"
-    "FLpeftXwMl4prEVqYPB5vKogDu4D2nbtJh3qyur1tvHHTFgsWLJpoVKo5cWvzLEI\n"
-    "zzf4ciM5w43J4JVgn1nV/28xEKN9XYVi85pfmAXkZEfv7jy6PXyyuoyZORX9fCes\n"
-    "xRhuqZcfpbv9Bm5S7Bnytu3XFtCR8lxi+tju0ML0QVBfvCs6pp7QepR9MxLQksfX\n"
-    "+MF9+mUg9kj+wRVX760hn7TwgBAmyMRCexHPV4L2xYKoNI2zv0InQKRDUyp4aw==\n"
-    "-----END CERTIFICATE-----\n";
-
-// Client KEY
-const char *Cliet_key =
-    "-----BEGIN RSA PRIVATE KEY-----\n"
-    "MIIEowIBAAKCAQEA2fAECBwaSWqpafFDSu9uXuHvmkXW4FGAU86K46iBjHMpMgjP\n"
-    "/T7Cu51owwKdhBxLAC7uI1BLkFBhNLwhCh7glXUnF2rCHk8FMdKWyFQTS9Dre2IC\n"
-    "5WgE+y/UehgkdRD5fyc9VYPcTxXKR9Y8iSfZhqS3q24ceJ+o5CgIzi0Vy7jAGU3Z\n"
-    "zqfmEaBQFJjFjOX7v7/dF2wDaGtJwR0Tt7bxnr/av/oHoT78NcPPhy1WQWYT7wyN\n"
-    "nLi8pLD7Us4WjewiYKiKKQQqWN1xk0N1TVAom19C+5o/TLngDjJxgoJTGFhKkUP9\n"
-    "RAnCtp0qjPk0OFr7JQ155XaZWBasnh+FDYYRTQIDAQABAoIBAB1yT6kk2uxmjANz\n"
-    "hMsgNMJ/NpeariDbAkLQmnWONArdGIjZJfkqvLcK2rfWp5/NDtk0fhqpY7xZD/lH\n"
-    "HhO2/lNTY/fHBfmAZcxIjvT8XysUTGz8XjXO6zVhTg09K9fhdkSW8bOXQHIzGITC\n"
-    "TqWdi8ekg+iW1SP7Np+1RRNOhi5jRRB8NW+U/UahxWAqM5/zlybec8PtCy7Iagxo\n"
-    "TEq5n0zVI4hHXXYc1xuvRTA4xua8CT0cCH/G6t/rch1ZK+eWtrfWSbVbxgyYrdE/\n"
-    "5VkWDlYW24zLYh8VgyRzwpyqXYW5D+r1dBMjnLnkPCZzR8/L3knqIzy2XLWX2B5S\n"
-    "JixNKwECgYEA/+ZyxdDSNxBotb//GV1n5O/EU9blA+RO8FVF9UpClJ4ZA+xhF4Ce\n"
-    "hP0lYF6UlkFTd+tlIEV6ebQEK8qqrji+S/dQ76Mv9IX0QD8a1xdz13OwjFVdmHvQ\n"
-    "8LqFtOHNzG+zi+zaODnLtbziHu0wH/g/LAzg4nPH3YP265ucIAXZI8ECgYEA2gXG\n"
-    "30PuAE+tnTktPIeiMeq8aCOQl9lZhzhevtIfVm1BNY2jPM/8zG7uJLNWe/WyG56p\n"
-    "qh2VjS+wp5zb0YtAj//Kcrk/DPaJQbGpoIYTJcGufhxsgB7kL+JoRovNwlsW5IOW\n"
-    "3mCMZroof5AwvlseufejSuTmv+CY5WcrwOTFYI0CgYAhApMvnV5gqAc52siHdxsd\n"
-    "1ygWQJROSjc8nWNm3utzzGkhrm5f38GTGiymH80/DLI9t+nVneDMrkITfBNEYiF6\n"
-    "Hy8bmotnGZiGaR2HPYk987iEgcaPEvnC8+ynhrFLe+VHWYhU1G/Iw9LPdn1MwnMz\n"
-    "tX2U+KaBlrJVdj9PijGWgQKBgQC6K1ioaX8f8OnVaW+BUmhjq4f6fPQJVmWmm7H7\n"
-    "y71KtbyLGEkdspSxlL/xwtnEvAa8ov1J8D019FUqqzzhb8FPtSKQWDLIxPRrjmPE\n"
-    "WPicswhnU6oqtTYw1WopY1Pt9I5Vzy/S8CqzxZ6zXtLgmTphnl5no5KOoiCtMy4f\n"
-    "ZrpMOQKBgGkcTE0FecGPTzUZnWvfSbiwapXcvRvwtyhESboFT1divIq3xKk1EFRg\n"
-    "RpvnkgwHbUjvhFIfr1Uh/0XeZhlGj0mFKuOZKu6Rnv5CxHBuCDWXrjtMAZWOGE8c\n"
-    "cw3QG/25zmEeOc6Eyf8ErsKApIxAc9RHlneC76E4wYuA1AkOSqdy\n"
-    "-----END RSA PRIVATE KEY-----\n";
-
-// **************************************************************************************
 //
 //                      Definition of Local Functions
 //
@@ -205,7 +123,6 @@ static void readGSMResponse()
             rx_buf[ndx] = '\0'; // terminate the string
             ndx = 0;
         }
-    vTaskDelay(pdMS_TO_TICKS(100));
     }
     Serial.println(rx_buf);
 }
@@ -218,10 +135,10 @@ static bool waitForResponse(const char *response, unsigned long timeout)
 
     while (millis() - startTime < timeout)
     {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
         readGSMResponse();
-        Serial.print("..");
         esp_task_wdt_reset();
+        Serial.println(millis() - startTime);
         searchString = (uint8_t *)strstr(rx_buf, response);
         if (searchString != NULL)
         {
@@ -282,7 +199,7 @@ static bool checkModuleResponse()
             ret = false; // modem not detected
             retries++;
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
     } while ((ret == false) && (retries < 15));
     return ret;
 }
@@ -347,7 +264,7 @@ static bool checkGSMRegistration()
             ret = true;
         }
         retries++;
-        vTaskDelay(pdMS_TO_TICKS(70));
+        vTaskDelay(pdMS_TO_TICKS(10));
     } while ((ret == false) && (retries < 50));
     return ret;
 }
@@ -355,7 +272,7 @@ static bool checkGSMRegistration()
 static bool checkGPRS()
 {
     GSM.print(F("AT+CGATT?\r"));
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(100));
     readGSMResponse();
     bool ret = false;
 
@@ -432,17 +349,17 @@ static bool openMqtt()
                     ret = false;
                     mqttAlreadyOpen = false;
                 }
-                vTaskDelay(pdMS_TO_TICKS(100));
+                vTaskDelay(pdMS_TO_TICKS(10));
             }
             else
             {
                 printf("MQTT not found in the response.\n");
                 ret = false;
                 mqttAlreadyOpen = false;
-                vTaskDelay(pdMS_TO_TICKS(100));
+                vTaskDelay(pdMS_TO_TICKS(10));
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
         retries++;
     } while (mqttAlreadyOpen == false && retries < 7);
 
@@ -516,13 +433,13 @@ static bool openMqttConnection()
                     Serial.println("MQTT connection not Open");
                     ret = false;
                 }
-                vTaskDelay(pdMS_TO_TICKS(500));
+                vTaskDelay(pdMS_TO_TICKS(100));
             }
             else
             {
                 printf("QMTCONN not found in the response.\n");
                 ret = false;
-                vTaskDelay(pdMS_TO_TICKS(500));
+                vTaskDelay(pdMS_TO_TICKS(100));
                 // needToOpenMqttAgain = true;
             }
 
@@ -629,7 +546,7 @@ static void checkSim()
         readGSMResponse();
         processResponseCCID(rx_buf);
         retries++;
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
     } while ((simInserted == false) && (retries < 30));
 
     GSM.print(F("AT+CSQ\r\n")); // Signal quality test, value range is 0-31 , 31 is the best
@@ -649,7 +566,7 @@ static void checkSim()
 static void networkReg()
 {
     bool reg = false;
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(100));
     reg = checkGSMRegistration();
     if (reg == true)
     {
@@ -673,50 +590,50 @@ static void configSSL()
 
     GSM.print(F("AT+QMTCFG=\"SSL\",0,1,2\r\n"));
     readGSMResponse();
-    GSM.print(F("AT+QSECWRITE=\"RAM:cacert.pem\",1187,200\r\n"));
+    GSM.print(F("AT+QSECWRITE=\"RAM:cacert.pem\",1187,100\r\n"));
     if (waitForResponse("CONNECT", 10000))
     {
-        GSM.print(CA_certificate);
+        GSM.print(Read_rootca);
         readGSMResponse();
     }
     else
     {
-        Serial.println("No CONNECT response received.");
+        Serial.println("No CONNECT response received for CA Cert");
     }
 
     GSM.print(F("AT+QSECWRITE=\"RAM:client.pem\",1224,100\r\n"));
     if (waitForResponse("CONNECT", 10000))
     {
-        GSM.print(Cliet_certificate);
+        GSM.print(Client_cert);
         readGSMResponse();
     }
     else
     {
-        Serial.println("No CONNECT response received.");
+        Serial.println("No CONNECT response received for Client Cert");
     }
 
     GSM.print(F("AT+QSECWRITE=\"RAM:user_key.pem\",1679,100\r\n"));
     if (waitForResponse("CONNECT", 10000))
     {
-        GSM.print(Cliet_key);
+        GSM.print(Client_privatekey);
         readGSMResponse();
     }
     else
     {
-        Serial.println("No CONNECT response received.");
+        Serial.println("No CONNECT response received for Client PVT key");
     }
 
-    GSM.print(F("AT+QSECREAD=\"RAM:cacert.pem\"\r\n"));
     vTaskDelay(pdMS_TO_TICKS(200));
+    GSM.print(F("AT+QSECREAD=\"RAM:cacert.pem\"\r\n"));
     readGSMResponse();
 
     GSM.print(F("AT+QSECREAD=\"RAM:client.pem\"\r\n"));
-    vTaskDelay(pdMS_TO_TICKS(200));
     readGSMResponse();
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     GSM.print(F("AT+QSECREAD=\"RAM:user_key.pem\"\r\n"));
-    vTaskDelay(pdMS_TO_TICKS(200));
     readGSMResponse();
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     GSM.print(F("AT+QSSLCFG=\"cacert\",2,\"RAM:cacert.pem\"\r\n"));
     readGSMResponse();
@@ -741,7 +658,7 @@ static void gprsOpen()
 {
     uint8_t carrierDetect = 0;
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(100));
     GSM.print(F("AT+COPS?\r\n"));
     readGSMResponse();
     carrierDetect = ProcessCopsCommand(rx_buf);
@@ -816,52 +733,52 @@ static void publishData()
     printf("%s", mqttPubStr);
 
     unsigned char retries = 0;
-    unsigned char waterDistance= 12;
-    createJSON(waterDistance);
+    Serial.flush();
+    createJSON(14);
     do
     {
         esp_task_wdt_reset();
-        if (mqtt == true || mqttAlreadyOpen == true)
-        {
+        // if (mqtt == true || mqttAlreadyOpen == true)
+        // {
             // send data first time
             GSM.print(mqttPubStr);
             readGSMResponse();
             GSM.print(F(jsonBuffer));
             GSM.write(0X1A);
             GSM.write(0X1A);
-            vTaskDelay(pdMS_TO_TICKS(700));
+            readGSMResponse();
+            isDataPublished(rx_buf);
+            vTaskDelay(pdMS_TO_TICKS(2000));
             // send data second time
             GSM.print(mqttPubStr);
             readGSMResponse();
             GSM.print(F(jsonBuffer));
             GSM.write(0X1A);
             GSM.write(0X1A);
-            vTaskDelay(pdMS_TO_TICKS(700));
-            // send data third time
-            GSM.print(mqttPubStr);
             readGSMResponse();
-            GSM.print(F(jsonBuffer));
-            GSM.write(0X1A);
-            GSM.write(0X1A);
-            vTaskDelay(pdMS_TO_TICKS(700));
-        }
-        readGSMResponse();
-        isDataPublished(rx_buf);
-        esp_task_wdt_reset();
+            isDataPublished(rx_buf);
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        // }
+       // esp_task_wdt_reset();
         retries++;
-        vTaskDelay(pdMS_TO_TICKS(100));
     } while ((retries < 3) && (dataPublished == false));
 
     if (dataPublished == true)
     {
-        GSM.print(F("AT+QMTDISC=0\r\n")); // disconnect MQTT before entering sleep, so we open again after wakeup
-        readGSMResponse();
+       // GSM.print(F("AT+QMTDISC=0\r\n")); // disconnect MQTT before entering sleep, so we open again after wakeup
+       // readGSMResponse();
         errorretry = 0;
-        enterDeepSleep();
+       // enterDeepSleep();
     }
     else
     {
         gsmStateRun = errorState;
+    }
+
+    for (uint8_t i=0; i<60; i++)
+    {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        Serial.println(i);
     }
 }
 
@@ -934,24 +851,24 @@ void gsmStateMachine()
             gsmStateRun = checkGsmResponse;
             takeSensorReadings = false;
         }
-        else
-        {
-            gsmError = true;
-            takeSensorReadings = false;
-            vTaskDelay(pdMS_TO_TICKS(100));
-            // Serial.println("Error state");
-            // If the error state just started, record the start time
-            if (errorStateStartTime == 0)
-            {
-                errorStateStartTime = millis();
-            }
-            // Check if 5 minutes have passed
-            if (millis() - errorStateStartTime >= errorStateDuration)
-            {
-                vTaskDelay(pdMS_TO_TICKS(100));
-                enterDeepSleep();
-            }
-        }
+        // else
+        // {
+        //     gsmError = true;
+        //     takeSensorReadings = false;
+        //     vTaskDelay(pdMS_TO_TICKS(100));
+        //     // Serial.println("Error state");
+        //     // If the error state just started, record the start time
+        //     if (errorStateStartTime == 0)
+        //     {
+        //         errorStateStartTime = millis();
+        //     }
+        //     // Check if 5 minutes have passed
+        //     if (millis() - errorStateStartTime >= errorStateDuration)
+        //     {
+        //         vTaskDelay(pdMS_TO_TICKS(100));
+        //         enterDeepSleep();
+        //     }
+        // }
         errorretry++;
         break;
 
